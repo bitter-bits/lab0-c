@@ -5,6 +5,41 @@
 #include "harness.h"
 #include "queue.h"
 
+static int smaller(int a, int b)
+{
+    return a < b ? a : b;
+}
+
+static bool copy_str_and_attach(list_ele_t *e, char *s)
+{
+    if (!e)
+        return false;
+
+    char *p = malloc(strlen(s) + 1);
+    if (!p)
+        return false;
+
+    strncpy(p, s, strlen(s));
+
+    e->value = p;
+
+    return true;
+}
+
+static list_ele_t *create_element()
+{
+    list_ele_t *new_e = NULL;
+    new_e = malloc(sizeof(list_ele_t));
+
+    if (!new_e)
+        return NULL;
+
+    new_e->next = NULL;
+    new_e->value = NULL;
+
+    return new_e;
+}
+
 /*
  * Create empty queue.
  * Return NULL if could not allocate space.
@@ -13,12 +48,12 @@ queue_t *q_new()
 {
     queue_t *q = malloc(sizeof(queue_t));
 
-    /* TODO: What if malloc returned NULL? */
-    if (!q) {
+    if (!q)
         return NULL;
-    }
 
     q->head = NULL;
+    q->tail = NULL;
+    q->size = 0;
 
     return q;
 }
@@ -26,8 +61,21 @@ queue_t *q_new()
 /* Free all storage used by queue */
 void q_free(queue_t *q)
 {
-    /* TODO: How about freeing the list elements and the strings? */
-    /* Free queue structure */
+    if (!q)
+        return;
+
+    list_ele_t *e = q->head;
+    while (e) {
+        /* Delete string */
+        if (e->value)
+            free(e->value);
+
+        /* Delete element */
+        list_ele_t *old = e;
+        e = e->next;
+        free(old);
+    }
+
     free(q);
 }
 
@@ -40,13 +88,17 @@ void q_free(queue_t *q)
  */
 bool q_insert_head(queue_t *q, char *s)
 {
-    list_ele_t *newh;
-    /* TODO: What should you do if the q is NULL? */
-    newh = malloc(sizeof(list_ele_t));
-    /* Don't forget to allocate space for the string and copy it */
-    /* What if either call to malloc returns NULL? */
+    list_ele_t *newh = create_element();
+    if (!newh)
+        return false;
+
+    if (!copy_str_and_attach(newh, s))
+        return false;
+
     newh->next = q->head;
     q->head = newh;
+    q->size += 1;
+
     return true;
 }
 
@@ -59,10 +111,33 @@ bool q_insert_head(queue_t *q, char *s)
  */
 bool q_insert_tail(queue_t *q, char *s)
 {
-    /* TODO: You need to write the complete code for this function */
-    /* Remember: It should operate in O(1) time */
-    /* TODO: Remove the above comment when you are about to implement. */
-    return false;
+    list_ele_t *current = NULL;
+
+    /* Find the last element */
+    if (!q->tail) {
+        current = q->head;
+        while (current->next) {
+            current = current->next;
+        }
+    } else {
+        current = q->tail;
+    }
+
+    /* Create new element */
+    list_ele_t *new_e = create_element();
+    if (!new_e)
+        return false;
+
+    if (!copy_str_and_attach(new_e, s))
+        return false;
+
+    current->next = new_e;
+
+    /* Backup the last element */
+    q->tail = new_e;
+    q->size += 1;
+
+    return true;
 }
 
 /*
@@ -75,9 +150,23 @@ bool q_insert_tail(queue_t *q, char *s)
  */
 bool q_remove_head(queue_t *q, char *sp, size_t bufsize)
 {
-    /* TODO: You need to fix up this code. */
-    /* TODO: Remove the above comment when you are about to implement. */
-    q->head = q->head->next;
+    if (!q || q->size == 0)
+        return false;
+
+    list_ele_t *head = q->head;
+    if (sp) {
+        int str_sz = smaller(bufsize - 1, strlen(head->value));
+        strncpy(sp, head->value, str_sz);
+        sp[str_sz] = 0;
+    }
+
+    free(head->value);
+
+    q->head = head->next;
+    free(head);
+
+    q->size -= 1;
+
     return true;
 }
 
@@ -87,10 +176,7 @@ bool q_remove_head(queue_t *q, char *sp, size_t bufsize)
  */
 int q_size(queue_t *q)
 {
-    /* TODO: You need to write the code for this function */
-    /* Remember: It should operate in O(1) time */
-    /* TODO: Remove the above comment when you are about to implement. */
-    return 0;
+    return (q && q->size > 0 ? q->size : 0);
 }
 
 /*
