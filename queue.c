@@ -20,6 +20,7 @@ static bool copy_str_and_attach(list_ele_t *e, char *s)
         return false;
 
     strncpy(p, s, strlen(s));
+    p[strlen(s)] = 0;
 
     e->value = p;
 
