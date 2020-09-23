@@ -5,9 +5,3 @@ qtest
 .vscode
 .devcontainer
 core*
-.cmd_history
-.gitignore
-# for local test
-Makefile
-scripts/driver.py
-
