@@ -5,9 +5,21 @@
 #include "harness.h"
 #include "queue.h"
 
-static int smaller(int a, int b)
+/******** Utility Zone ********/
+
+static inline int smaller(int a, int b)
 {
     return a < b ? a : b;
+}
+
+static inline void increase_size(queue_t *q)
+{
+    q->size += 1;
+}
+
+static inline void decrease_size(queue_t *q)
+{
+    q->size -= 1;
 }
 
 static bool copy_str_and_attach(list_ele_t *e, char *s)
@@ -29,9 +41,7 @@ static bool copy_str_and_attach(list_ele_t *e, char *s)
 
 static list_ele_t *create_element()
 {
-    list_ele_t *new_e = NULL;
-    new_e = malloc(sizeof(list_ele_t));
-
+    list_ele_t *new_e = malloc(sizeof(list_ele_t));
     if (!new_e)
         return NULL;
 
@@ -41,6 +51,8 @@ static list_ele_t *create_element()
     return new_e;
 }
 
+/******** End of Utility Zone ********/
+
 /*
  * Create empty queue.
  * Return NULL if could not allocate space.
@@ -49,6 +61,7 @@ queue_t *q_new()
 {
     queue_t *q = malloc(sizeof(queue_t));
 
+    /* Return NULL if could not allocate space */
     if (!q)
         return NULL;
 
@@ -67,11 +80,9 @@ void q_free(queue_t *q)
 
     list_ele_t *e = q->head;
     while (e) {
-        /* Delete string */
         if (e->value)
             free(e->value);
 
-        /* Delete element */
         list_ele_t *old = e;
         e = e->next;
         free(old);
@@ -89,16 +100,27 @@ void q_free(queue_t *q)
  */
 bool q_insert_head(queue_t *q, char *s)
 {
-    list_ele_t *newh = create_element();
-    if (!newh)
+    if (!q)
         return false;
 
-    if (!copy_str_and_attach(newh, s))
+    list_ele_t *e = create_element();
+    if (!e)
         return false;
 
-    newh->next = q->head;
-    q->head = newh;
-    q->size += 1;
+    if (!copy_str_and_attach(e, s)) {
+        free(e);
+
+        return false;
+    }
+
+    if (q->head) {
+        e->next = q->head;
+    }
+
+    increase_size(q);
+    q->head = e;
+    if (q->size == 1)
+        q->tail = e;
 
     return true;
 }
@@ -112,31 +134,26 @@ bool q_insert_head(queue_t *q, char *s)
  */
 bool q_insert_tail(queue_t *q, char *s)
 {
-    list_ele_t *current = NULL;
+    if (!q)
+        return false;
 
-    /* Find the last element */
-    if (!q->tail) {
-        current = q->head;
-        while (current->next) {
-            current = current->next;
-        }
-    } else {
-        current = q->tail;
+    list_ele_t *e = create_element();
+    if (!e)
+        return false;
+
+    if (!copy_str_and_attach(e, s)) {
+        free(e);
+
+        return false;
     }
 
-    /* Create new element */
-    list_ele_t *new_e = create_element();
-    if (!new_e)
-        return false;
+    if (q->size > 0)
+        q->tail->next = e;
 
-    if (!copy_str_and_attach(new_e, s))
-        return false;
-
-    current->next = new_e;
-
-    /* Backup the last element */
-    q->tail = new_e;
-    q->size += 1;
+    q->tail = e;
+    increase_size(q);
+    if (q->size == 1)
+        q->head = e;
 
     return true;
 }
@@ -151,7 +168,7 @@ bool q_insert_tail(queue_t *q, char *s)
  */
 bool q_remove_head(queue_t *q, char *sp, size_t bufsize)
 {
-    if (!q || q->size == 0)
+    if (!q || q->size == 0 || !q->head)
         return false;
 
     list_ele_t *head = q->head;
@@ -164,9 +181,10 @@ bool q_remove_head(queue_t *q, char *sp, size_t bufsize)
     free(head->value);
 
     q->head = head->next;
+
     free(head);
 
-    q->size -= 1;
+    decrease_size(q);
 
     return true;
 }
@@ -189,8 +207,29 @@ int q_size(queue_t *q)
  */
 void q_reverse(queue_t *q)
 {
-    /* TODO: You need to write the code for this function */
-    /* TODO: Remove the above comment when you are about to implement. */
+    if (!q || !q->head)
+        return;
+
+    list_ele_t *a = q->head, *b = a->next, *c = NULL;
+
+    /* Swap head and tail */
+    q->tail = a;
+    a->next = NULL;
+
+    while (b) {
+        /* c is the third element */
+        c = b->next;
+
+        /* Revert b to a */
+        b->next = a;
+
+        /* Next a and b */
+        a = b;
+        b = c;
+    }
+
+    /* Make the last element be the head of queue */
+    q->head = a;
 }
 
 /*
@@ -200,6 +239,24 @@ void q_reverse(queue_t *q)
  */
 void q_sort(queue_t *q)
 {
-    /* TODO: You need to write the code for this function */
-    /* TODO: Remove the above comment when you are about to implement. */
+    if (!q)
+        return;
+
+    /* if q has only one element, do nothing */
+    if (q->size == 1)
+        return;
+
+    list_ele_t *a = q->head;
+    while (a) {
+        list_ele_t *b = a->next;
+        while (b) {
+            if (strcmp(a->value, b->value) > 0) {
+                char *t = a->value;
+                a->value = b->value;
+                b->value = t;
+            }
+            b = b->next;
+        }
+        a = a->next;
+    }
 }
