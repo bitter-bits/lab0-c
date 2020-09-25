@@ -237,26 +237,86 @@ void q_reverse(queue_t *q)
  * No effect if q is NULL or empty. In addition, if q has only one
  * element, do nothing.
  */
+// void q_sort(queue_t *q)
+// {
+//     if (!q)
+//         return;
+
+//     /* if q has only one element, do nothing */
+//     if (q->size == 1)
+//         return;
+
+//     list_ele_t *a = q->head;
+//     while (a) {
+//         list_ele_t *b = a->next;
+//         while (b) {
+//             if (strcmp(a->value, b->value) > 0) {
+//                 char *t = a->value;
+//                 a->value = b->value;
+//                 b->value = t;
+//             }
+//             b = b->next;
+//         }
+//         a = a->next;
+//     }
+// }
+
+void q_do_sort(list_ele_t *e);
+
 void q_sort(queue_t *q)
 {
-    if (!q)
-        return;
-
     /* if q has only one element, do nothing */
-    if (q->size == 1)
+    if (!q || q->size == 1)
         return;
 
-    list_ele_t *a = q->head;
-    while (a) {
-        list_ele_t *b = a->next;
-        while (b) {
-            if (strcmp(a->value, b->value) > 0) {
-                char *t = a->value;
-                a->value = b->value;
-                b->value = t;
-            }
-            b = b->next;
-        }
-        a = a->next;
+    q_do_sort(q->head);
+}
+
+void swap_if_larger(list_ele_t *a, list_ele_t *b)
+{
+    if (strcmp(a->value, b->value) > 0) {
+        char *t = a->value;
+        a->value = b->value;
+        b->value = t;
     }
+}
+
+void q_do_sort(list_ele_t *e)
+{
+    /* if e is the only one element, do nothing */
+    if (!e || !e->next)
+        return;
+
+    list_ele_t *head_a, *tail_a, *head_b, *tail_b;
+    head_a = tail_a = e;
+    head_b = tail_b = e->next;
+
+    char *pivot = tail_b->value;
+
+    /* if a > b, swap values */
+    swap_if_larger(tail_a, tail_b);
+
+    if (!e->next->next)
+        return;
+
+    list_ele_t *rest = e->next;
+    while ((rest = rest->next)) {
+        if (strcmp(rest->value, pivot) > 0) {
+            tail_b->next = rest;
+            tail_b = rest;
+        } else {
+            tail_a->next = rest;
+            tail_a = rest;
+        }
+    }
+
+    /* split */
+    tail_a->next = NULL;
+    q_do_sort(head_a);
+
+    tail_b->next = NULL;
+    q_do_sort(head_b);
+
+    /* chain */
+    tail_a->next = head_b;
 }
