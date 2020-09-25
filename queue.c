@@ -27,12 +27,17 @@ static bool copy_str_and_attach(list_ele_t *e, char *s)
     if (!e)
         return false;
 
-    char *p = malloc(strlen(s) + 1);
+    const int SZ = strlen(s);
+
+    char *p = malloc(SZ + 1);
     if (!p)
         return false;
 
-    strncpy(p, s, strlen(s));
-    p[strlen(s)] = 0;
+    // strncpy(p, s, strlen(s));
+    for (int i = 0; i < SZ; i++) {
+        p[i] = s[i];
+    }
+    p[SZ] = 0;
 
     e->value = p;
 
@@ -198,6 +203,15 @@ int q_size(queue_t *q)
     return (q && q->size > 0 ? q->size : 0);
 }
 
+void swap_head_and_tail(queue_t *q, list_ele_t *head, list_ele_t *tail)
+{
+    list_ele_t *tmp = tail;
+    q->tail = head;
+    q->head = tmp;
+
+    q->tail->next = NULL;
+}
+
 /*
  * Reverse elements in queue
  * No effect if q is NULL or empty
@@ -207,59 +221,27 @@ int q_size(queue_t *q)
  */
 void q_reverse(queue_t *q)
 {
-    if (!q || !q->head)
+    if (!q || q->size < 2)
         return;
 
-    list_ele_t *a = q->head, *b = a->next, *c = NULL;
+    list_ele_t *copy_head = q->head, *copy_tail = q->tail;
+    list_ele_t *a = q->head, *b = q->head->next;
 
-    /* Swap head and tail */
-    q->tail = a;
     a->next = NULL;
 
-    while (b) {
-        /* c is the third element */
-        c = b->next;
-
+    while ((a && b)) {
+        list_ele_t *c = b->next;
         /* Revert b to a */
         b->next = a;
 
-        /* Next a and b */
+        /* Shift a and b */
         a = b;
         b = c;
     }
 
-    /* Make the last element be the head of queue */
-    q->head = a;
+    /* Swap head and tail */
+    swap_head_and_tail(q, copy_head, copy_tail);
 }
-
-/*
- * Sort elements of queue in ascending order
- * No effect if q is NULL or empty. In addition, if q has only one
- * element, do nothing.
- */
-// void q_sort(queue_t *q)
-// {
-//     if (!q)
-//         return;
-
-//     /* if q has only one element, do nothing */
-//     if (q->size == 1)
-//         return;
-
-//     list_ele_t *a = q->head;
-//     while (a) {
-//         list_ele_t *b = a->next;
-//         while (b) {
-//             if (strcmp(a->value, b->value) > 0) {
-//                 char *t = a->value;
-//                 a->value = b->value;
-//                 b->value = t;
-//             }
-//             b = b->next;
-//         }
-//         a = a->next;
-//     }
-// }
 
 void q_do_sort(list_ele_t *e);
 
@@ -272,7 +254,7 @@ void q_sort(queue_t *q)
     q_do_sort(q->head);
 }
 
-void swap_if_larger(list_ele_t *a, list_ele_t *b)
+static inline void swap_if_larger(list_ele_t *a, list_ele_t *b)
 {
     if (strcmp(a->value, b->value) > 0) {
         char *t = a->value;
