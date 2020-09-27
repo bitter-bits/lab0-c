@@ -243,17 +243,6 @@ void q_reverse(queue_t *q)
     swap_head_and_tail(q, copy_head, copy_tail);
 }
 
-void q_do_sort(list_ele_t *e);
-
-void q_sort(queue_t *q)
-{
-    /* if q has only one element, do nothing */
-    if (!q || q->size == 1)
-        return;
-
-    q_do_sort(q->head);
-}
-
 static inline void swap_if_larger(list_ele_t *a, list_ele_t *b)
 {
     if (strcmp(a->value, b->value) > 0) {
@@ -263,42 +252,129 @@ static inline void swap_if_larger(list_ele_t *a, list_ele_t *b)
     }
 }
 
-void q_do_sort(list_ele_t *e)
+static inline bool is_ascending(list_ele_t *a, list_ele_t *b)
 {
-    /* if e is the only one element, do nothing */
-    if (!e || !e->next)
-        return;
+    return (strcmp(a->value, b->value) <= 0);
+}
 
-    list_ele_t *head_a, *tail_a, *head_b, *tail_b;
-    head_a = tail_a = e;
-    head_b = tail_b = e->next;
+// static void show_list(list_ele_t *e, int SZ)
+// {
+//     int cnt = 0;
+//     while (e) {
+//         cnt++;
+//         printf("%s ", e->value);
+//         e = e->next;
+//     }
 
-    char *pivot = tail_b->value;
+//     if (cnt == SZ)
+//         printf(": %d\n", SZ);
+//     else
+//         printf(": %d or %d ?! ********\n", cnt, SZ);
+// }
 
-    /* if a > b, swap values */
-    swap_if_larger(tail_a, tail_b);
+list_ele_t *q_do_sort(list_ele_t *e, const int SZ)
+{
+    // printf("\n[IN]\n");
+    // show_list(e, SZ);
 
-    if (!e->next->next)
-        return;
+    if (SZ < 2)
+        return e;
 
-    list_ele_t *rest = e->next;
-    while ((rest = rest->next)) {
-        if (strcmp(rest->value, pivot) > 0) {
-            tail_b->next = rest;
-            tail_b = rest;
-        } else {
-            tail_a->next = rest;
-            tail_a = rest;
-        }
+    /* sort two elements and return */
+    if (SZ == 2) {
+        swap_if_larger(e, e->next);
+
+        return e;
     }
 
     /* split */
+
+    list_ele_t *head_a = e, *tail_a = e;
+    for (int i = 0; i < SZ / 2; i++) {
+        tail_a = tail_a->next;
+    }
+
+    list_ele_t *head_b = tail_a->next;
     tail_a->next = NULL;
-    q_do_sort(head_a);
 
-    tail_b->next = NULL;
-    q_do_sort(head_b);
+    // printf("A: "); show_list(head_a, SZ / 2 + 1);
+    // printf("B: "); show_list(head_b, SZ - SZ / 2 - 1);
 
-    /* chain */
-    tail_a->next = head_b;
+    /* recur */
+
+    head_a = q_do_sort(head_a, SZ / 2 + 1);
+    head_b = q_do_sort(head_b, SZ - SZ / 2 - 1);
+
+    /* combine */
+
+    // printf("\nCOMBINE\n");
+    // printf("A: "); show_list(head_a, SZ / 2 + 1);
+    // printf("B: "); show_list(head_b, SZ - SZ / 2 - 1);
+
+    // printf("M: {");
+    list_ele_t *a = head_a, *b = head_b, *m = NULL, *head_m = NULL;
+    if (is_ascending(a, b)) {
+        m = a;
+        a = a->next;
+    } else {
+        m = b;
+        b = b->next;
+    }
+    head_m = m;
+    // printf("%s ", m->value);
+    while (a && b) {
+        if (is_ascending(a, b)) {
+            m->next = a;
+            a = a->next;
+        } else {
+            m->next = b;
+            b = b->next;
+        }
+        m = m->next;
+        // printf("%s ", m->value);
+    }
+    // printf("; ");
+
+    list_ele_t *other = (a ? a : b);
+    while (true) {
+        m->next = other;
+        m = m->next;
+        // printf("%s ", m->value);
+        if (!(other = other->next))
+            break;
+    }
+    m->next = NULL;
+    // printf("}\n");
+
+    return head_m;
+}
+
+void q_sort(queue_t *q)
+{
+    /* if q has only one element, do nothing */
+    if (!q || q->size == 1)
+        return;
+
+    list_ele_t *new_head = q_do_sort(q->head, q->size);
+    q->head = new_head;
+
+    list_ele_t *new_tail = new_head;
+    while (new_tail && new_tail->next) {
+        new_tail = new_tail->next;
+    }
+    q->tail = new_tail;
+
+    // printf("CHECK AFTER q_sort:\n");
+    // list_ele_t *k = q->head;
+    // int cnt = 0;
+    // while (true) {
+    //     if (!k->next)
+    //         break;
+    //     printf("%s:%d ", k->value, cnt);
+    //     k = k->next;
+    //     cnt++;
+    // }
+    // printf("\n");
+
+    // printf("q_sort done\n");
 }
