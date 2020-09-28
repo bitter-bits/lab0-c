@@ -239,7 +239,6 @@ void q_reverse(queue_t *q)
         b = c;
     }
 
-    /* Swap head and tail */
     swap_head_and_tail(q, copy_head, copy_tail);
 }
 
@@ -257,30 +256,13 @@ static inline bool is_ascending(list_ele_t *a, list_ele_t *b)
     return (strcmp(a->value, b->value) <= 0);
 }
 
-// static void show_list(list_ele_t *e, int SZ)
-// {
-//     int cnt = 0;
-//     while (e) {
-//         cnt++;
-//         printf("%s ", e->value);
-//         e = e->next;
-//     }
-
-//     if (cnt == SZ)
-//         printf(": %d\n", SZ);
-//     else
-//         printf(": %d or %d ?! ********\n", cnt, SZ);
-// }
-
 list_ele_t *q_do_sort(list_ele_t *e, const int SZ)
 {
-    // printf("\n[IN]\n");
-    // show_list(e, SZ);
-
+    /* no need to sort */
     if (SZ < 2)
         return e;
 
-    /* sort two elements and return */
+    /* if only two elements, just sort them and return */
     if (SZ == 2) {
         swap_if_larger(e, e->next);
 
@@ -297,9 +279,6 @@ list_ele_t *q_do_sort(list_ele_t *e, const int SZ)
     list_ele_t *head_b = tail_a->next;
     tail_a->next = NULL;
 
-    // printf("A: "); show_list(head_a, SZ / 2 + 1);
-    // printf("B: "); show_list(head_b, SZ - SZ / 2 - 1);
-
     /* recur */
 
     head_a = q_do_sort(head_a, SZ / 2 + 1);
@@ -307,11 +286,6 @@ list_ele_t *q_do_sort(list_ele_t *e, const int SZ)
 
     /* combine */
 
-    // printf("\nCOMBINE\n");
-    // printf("A: "); show_list(head_a, SZ / 2 + 1);
-    // printf("B: "); show_list(head_b, SZ - SZ / 2 - 1);
-
-    // printf("M: {");
     list_ele_t *a = head_a, *b = head_b, *m = NULL, *head_m = NULL;
     if (is_ascending(a, b)) {
         m = a;
@@ -321,7 +295,6 @@ list_ele_t *q_do_sort(list_ele_t *e, const int SZ)
         b = b->next;
     }
     head_m = m;
-    // printf("%s ", m->value);
     while (a && b) {
         if (is_ascending(a, b)) {
             m->next = a;
@@ -331,20 +304,16 @@ list_ele_t *q_do_sort(list_ele_t *e, const int SZ)
             b = b->next;
         }
         m = m->next;
-        // printf("%s ", m->value);
     }
-    // printf("; ");
 
     list_ele_t *other = (a ? a : b);
     while (true) {
         m->next = other;
         m = m->next;
-        // printf("%s ", m->value);
         if (!(other = other->next))
             break;
     }
     m->next = NULL;
-    // printf("}\n");
 
     return head_m;
 }
@@ -363,18 +332,4 @@ void q_sort(queue_t *q)
         new_tail = new_tail->next;
     }
     q->tail = new_tail;
-
-    // printf("CHECK AFTER q_sort:\n");
-    // list_ele_t *k = q->head;
-    // int cnt = 0;
-    // while (true) {
-    //     if (!k->next)
-    //         break;
-    //     printf("%s:%d ", k->value, cnt);
-    //     k = k->next;
-    //     cnt++;
-    // }
-    // printf("\n");
-
-    // printf("q_sort done\n");
 }
