@@ -225,18 +225,21 @@ void q_reverse(queue_t *q)
         return;
 
     list_ele_t *copy_head = q->head, *copy_tail = q->tail;
-    list_ele_t *a = q->head, *b = q->head->next;
 
-    a->next = NULL;
+    {
+        list_ele_t *a = q->head, *b = q->head->next;
 
-    while ((a && b)) {
-        list_ele_t *c = b->next;
-        /* Revert b to a */
-        b->next = a;
+        a->next = NULL;
 
-        /* Shift a and b */
-        a = b;
-        b = c;
+        while ((a && b)) {
+            list_ele_t *c = b->next;
+            /* Revert b to a */
+            b->next = a;
+
+            /* Shift a and b */
+            a = b;
+            b = c;
+        }
     }
 
     swap_head_and_tail(q, copy_head, copy_tail);
@@ -256,30 +259,40 @@ static inline bool is_ascending(list_ele_t *a, list_ele_t *b)
     return (strcmp(a->value, b->value) <= 0);
 }
 
+static void split_list(list_ele_t *e,
+                       const int SZ,
+                       list_ele_t **a,
+                       list_ele_t **b)
+{
+    /* the first half of the list */
+    list_ele_t *head_a = e, *last = e;
+    for (int i = 0; i < SZ / 2; i++) {
+        last = last->next;
+    }
+
+    /* the second half of the list */
+    list_ele_t *head_b = last->next;
+    last->next = NULL;
+
+    *a = head_a;
+    *b = head_b;
+}
+
 list_ele_t *q_do_sort(list_ele_t *e, const int SZ)
 {
     /* no need to sort */
     if (SZ < 2)
         return e;
 
-    /* if only two elements, just sort them and return */
+    /* if only two elements, compare and sort them */
     if (SZ == 2) {
         swap_if_larger(e, e->next);
 
         return e;
     }
 
-    /* split */
-
-    list_ele_t *head_a = e, *tail_a = e;
-    for (int i = 0; i < SZ / 2; i++) {
-        tail_a = tail_a->next;
-    }
-
-    list_ele_t *head_b = tail_a->next;
-    tail_a->next = NULL;
-
-    /* recur */
+    list_ele_t *head_a, *head_b;
+    split_list(e, SZ, &head_a, &head_b);
 
     head_a = q_do_sort(head_a, SZ / 2 + 1);
     head_b = q_do_sort(head_b, SZ - SZ / 2 - 1);
