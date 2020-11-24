@@ -1,6 +1,8 @@
 # lab0-c
 Assessing Your C Programming Skills
 
+<img src="./pic.png" align="right" alt="Logo" width="120">
+
 This lab will give you practice in the style of programming you will need to be able to do proficiently,
 especially for the later assignments in the class. The material covered should all be review for you. Some
 of the skills tested are:
